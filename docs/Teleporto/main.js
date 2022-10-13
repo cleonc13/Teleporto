@@ -63,7 +63,8 @@ const settings = {
 	WIDTH: 300,
 	HEIGHT: 150,
 
-	Enemy_Speed: 1.0
+	ENEMY_MIN_BASE_SPEED: 1.0,
+    ENEMY_MAX_BASE_SPEED: 2.0
 
 };
 
@@ -138,14 +139,20 @@ let Block4;
 /**
  * @typedef {{
  * pos: Vector,
- * speed: number
- * }} enemy
+ * }} Enemy
  */
 
+//  * speed: number
+
 /**
- * @type { enemy }
+ * @type { Enemy [] }
  */
-let enemy;
+ let enemies;
+
+/**
+ * @type { number }
+ */
+ let currentEnemySpeed;
 
 let position;
 
@@ -154,10 +161,10 @@ function update() {
     // The init function running at startup
 	if (!ticks) {
 
-		enemy = {
-			pos: vec(settings.WIDTH * 0.5, settings.HEIGHT),
-			speed: rnd(0, settings.Enemy_Speed)
-		};
+		// enemy = {
+		// 	pos: vec(settings.WIDTH * 0.5, settings.HEIGHT),
+		// 	speed: rnd(0, settings.Enemy_Speed)
+		// };
 
 		Player = {
             pos: vec(settings.WIDTH * 0.5/2, settings.HEIGHT * 0.5)
@@ -178,12 +185,26 @@ function update() {
 		Block4 = {
             pos: vec(settings.WIDTH * 0.5, settings.HEIGHT * 0.75)
         };
+
+		currentEnemySpeed = 0;
+		enemies = [];
 	}
 
 	//try to spawn enemies
-	color ("black");
-    char("b", enemy.pos);
-	enemy.pos.y -= settings.Enemy_Speed;
+
+	if (enemies.length === 0) {
+        currentEnemySpeed =
+            rnd(settings.ENEMY_MIN_BASE_SPEED, settings.ENEMY_MAX_BASE_SPEED);
+        for (let i = 0; i < 9; i++) {
+            const posX = rnd(0, settings.WIDTH);
+            const posY = -rnd(i * settings.HEIGHT * 0.1);
+            enemies.push({ pos: vec(posX, posY) })
+        }
+    }
+	//const posX = rnd(settings.WIDTH * 0.5, settings.HEIGHT);
+	// color ("black");
+    // char("b", enemy.pos);
+	// enemy.pos.y -= settings.Enemy_Speed;
 
 	if(input.isJustPressed) {
 		//play("coin");
@@ -221,4 +242,18 @@ function update() {
 	//Draw Player
 	color ("black");
     char("a", Player.pos);
+
+	remove(enemies, (e) => {
+        e.pos.y += currentEnemySpeed;
+        color("black");
+        char("b", e.pos);
+
+		const playercollidingwithenemy = char("b", e.pos).isColliding.char.a;
+
+		if (playercollidingwithenemy) {
+			end();
+		}
+
+        return (e.pos.y > settings.HEIGHT);
+    });
 }
